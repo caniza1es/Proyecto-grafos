@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2023-04-23 05:36:09 by Eclipse SUMO netedit Version 1.16.0
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!-- VTypes -->
+    <vType id="electric" accel="1.0" decel="1.0" maxSpeed="100.0" sigma="0.0">
+        <param key="has.battery.device" value="true"/>
+        <param key="maximumBatteryCapacity" value="2000"/>
+        <param key="stoppingThreshold" value="0.1"/>
+    </vType>
+
+</routes>

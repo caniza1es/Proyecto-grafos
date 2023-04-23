@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2023-04-21 04:22:54 by Eclipse SUMO sumo Version 1.16.0
+<!-- generated on 2023-04-23 05:36:09 by Eclipse SUMO sumo Version 1.16.0
 -->
 
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
         <net-file value="yastra.net.xml"/>
+        <route-files value="yastra.rou.xml"/>
     </input>
 
 </configuration>
