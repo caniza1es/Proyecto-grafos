@@ -7,7 +7,6 @@
 
     <input>
         <net-file value="yastra.net.xml"/>
-        <route-files value="yastra.rou.xml"/>
     </input>
 
 </configuration>
