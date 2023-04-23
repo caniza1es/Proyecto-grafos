@@ -27,6 +27,16 @@ def generate(network):
 		G.add_edge(k.getFromNode().getID(), k.getToNode().getID(), weight=weight, id=k.getID())
 	return G
 
+def makeevehicletype(network):
+	A = sumolib.vehicletype.CreateVehTypeDistribution(name="electDist",size=1)
+	Attr = [sumolib.vehicletype.VehAttribute("id",False,attribute_value="electric"),
+			sumolib.vehicletype.VehAttribute("has.battery.device",True,attribute_value="true"),
+			sumolib.vehicletype.VehAttribute("maximumBatteryCapacity",True,attribute_value="2000"),
+			sumolib.vehicletype.VehAttribute("stoppingThreshold",True,attribute_value="0.1")]
+	for i in Attr:
+		A.add_attribute(i)
+	A.to_xml(network)
+
 def update_edge_weights(G, net):
 	for u,v,data in G.edges(data=True):
 		edge_id = data['id']
@@ -67,7 +77,6 @@ def makenvehicles(n,s,e,count=0):
 		route_id = f"route_{i+count}"
 		traci.route.add(route_id, new_route)
 		traci.vehicle.add(vehicle_id, route_id)
-		print(traci.vehicle.getElectricityConsumption(vehicle_id))
 		count+=1
 	return count
 
@@ -83,21 +92,30 @@ def makenevehicles(n,s,e,initial_battery=1000,count=0):
 		count += 1
 	return count
 
-traci.start(["sumo-gui", "-c", "yastra.sumocfg"])
-net = sumolib.net.readNet("yastra.net.xml")
-graph = generate("yastra.net.xml")
+
+xml = "yastra.net.xml"
+cfg = "yastra.sumocfg"
+makeevehicletype(xml)
+traci.start(["sumo-gui", "-c", cfg])
+net = sumolib.net.readNet(xml)
+graph = generate(xml)
+makenevehicles(100,"A","C",100)
 
 
-makenevehicles(1,"A","C",1)
+lane_ids = traci.lane.getIDList()
+
+# Print the lane IDs
+print(lane_ids)
 
 
 step = 0
 while step < 1000:
-	print(traci.vehicle.getParameter("electric_vehicle_0", "device.battery.actualBatteryCapacity"))
 	traci.simulationStep()
 	update_edge_weights(graph, net)
 	for i in traci.vehicle.getIDList():
 		update_vehicle_route(graph,i,"C")
+		if traci.vehicle.getParameter(i,"device.battery.actualBatteryCapacity") == "0.00":
+			traci.vehicle.remove(i)
 	step += 1
 
 traci.close()
