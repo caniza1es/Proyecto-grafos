@@ -106,13 +106,6 @@ def find_most_important_edges(G):
 	return sorted_edges
 
 
-
-
-
-#def average_congestion_ratio(G, source, target):
-#    max_flow, flow_dict = maximum_flow(G, source, target)
-
-
 xml = "yastra.net.xml"
 cfg = "yastra.sumocfg"
 makeevehicletype(xml)
