@@ -1,7 +1,11 @@
 import traci
 import sumolib
 import networkx as nx
+from networkx.algorithms.flow import maximum_flow
 import math
+import itertools
+
+print("guh")
 
 def edge_capacity(edge, time_headway=2.0):
     num_lanes = traci.edge.getLaneNumber(edge.getID())
@@ -24,7 +28,7 @@ def generate(network):
 	for k in edges:
 		#weight = k.getLength()
 		weight = bpr_travel_time(k)
-		G.add_edge(k.getFromNode().getID(), k.getToNode().getID(), weight=weight, id=k.getID())
+		G.add_edge(k.getFromNode().getID(), k.getToNode().getID(), weight=weight, id=k.getID(),capacity=edge_capacity(k),flow=0)
 	return G
 
 def makeevehicletype(network):
@@ -44,6 +48,7 @@ def update_edge_weights(G, net):
 		#new_weight = edge.getLength()
 		new_weight = bpr_travel_time(edge)
 		G.edges[(u,v)]['weight'] = new_weight
+		G.edges[(u,v)]['flow'] = G.edges[(u,v)]['capacity'] / new_weight
 
 def update_vehicle_route(graph,vehicle_id,to_node):
 	current_edge_id = traci.vehicle.getRoadID(vehicle_id)
@@ -60,14 +65,9 @@ def update_vehicle_route(graph,vehicle_id,to_node):
 
 
 def shortest_path(graph, start_node, end_node):
-    # Find the shortest path between the start and end nodes
     path = nx.shortest_path(graph, start_node, end_node, weight='weight')
-
-    # Get the list of edges along the shortest path
     edges = [(path[i], path[i+1]) for i in range(len(path)-1)]
     edge_ids = [graph[path[i]][path[i+1]]['id'] for i in range(len(path)-1)]
-
-    # Return the list of edge IDs along the shortest path
     return edge_ids
 
 def makenvehicles(n,s,e,count=0):
@@ -81,42 +81,70 @@ def makenvehicles(n,s,e,count=0):
 	return count
 
 def makenevehicles(n,s,e,initial_battery=1000,count=0):
-	for i in range(n):
-		vehicle_id = f"electric_vehicle_{i+count}"
+	a_vehicles = []
+	for veh in range(n):
+		vehicle_id = f"electric_vehicle_{veh+count}"
 		new_route = shortest_path(graph, s,e)
-		route_id = f"route_{i+count}"
+		route_id = f"route_{veh+count}"
 		traci.route.add(route_id, new_route)
 		traci.vehicle.add(vehicle_id, route_id,typeID="electric")
 		traci.vehicle.setParameter(vehicle_id, "device.battery.actualBatteryCapacity", str(initial_battery))
-		
+		a_vehicles.append(vehicle_id)
 		count += 1
-	return count
+	return count,a_vehicles
+
+def simulation(vehicles,target):
+	for  a in vehicles:
+		try:
+			update_vehicle_route(graph,a,target)	
+		except:
+			vehicles.remove(a)
+
+def find_most_important_edges(G):
+	edge_betweenness = nx.edge_betweenness_centrality(G, weight='weight', normalized=False)
+	sorted_edges = sorted(edge_betweenness.items(), key=lambda x: x[1], reverse=True)
+	return sorted_edges
+
+
+
+
+
+#def average_congestion_ratio(G, source, target):
+#    max_flow, flow_dict = maximum_flow(G, source, target)
 
 
 xml = "yastra.net.xml"
 cfg = "yastra.sumocfg"
 makeevehicletype(xml)
+
 traci.start(["sumo-gui", "-c", cfg])
 net = sumolib.net.readNet(xml)
 graph = generate(xml)
-makenevehicles(100,"A","C",100)
 
 
-lane_ids = traci.lane.getIDList()
 
-# Print the lane IDs
-print(lane_ids)
+a_count,simulacion_a= makenevehicles(1000,"A","I",10000)
 
+for iteravi in range(1000):
+	carro_id = "amogus_{0}".format(iteravi)
+	ruta_id = "amogussy_{0}".format(iteravi)
+	traci.route.add(ruta_id, ["qwd","qwdqw"])
+	traci.vehicle.add(carro_id, ruta_id)
 
+A = []
+B = []
 step = 0
+
+max_flow,flow_dict = maximum_flow(graph, "A", "I")
+
+
 while step < 1000:
 	traci.simulationStep()
 	update_edge_weights(graph, net)
-	for i in traci.vehicle.getIDList():
-		update_vehicle_route(graph,i,"C")
-		if traci.vehicle.getParameter(i,"device.battery.actualBatteryCapacity") == "0.00":
-			traci.vehicle.remove(i)
+	simulation(simulacion_a,"I")
+
 	step += 1
+
 
 traci.close()
 
